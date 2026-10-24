@@ -20,6 +20,7 @@
 #include "container/qetzip.h"
 #include "utils/previousversions.h"
 #include "shownkinds.h"
+#include "git/gitrepository.h"
 #include "symboltextplacement.h"
 #ifdef QET_HAS_SCRIPTING
 #include "scripting/qetscripting.h"
@@ -759,6 +760,12 @@ void QETDiagramEditor::setUpActions()
 	connect(QETApp::instance(), &QETApp::shownKindsChanged,
 			this, &QETDiagramEditor::updateShownKinds);
 	updateShownKinds();
+
+		//Git state of the current project, refreshed when another
+		//project becomes current and after every save
+	m_git_status_label = new QLabel(this);
+	m_git_status_label->setVisible(false);
+	statusBar()->addPermanentWidget(m_git_status_label);
 
 		//Edit current diagram properties
 	m_edit_diagram_properties = new QAction(QET::Icons::DialogInformation, tr("Sheet properties"), this);
@@ -1854,6 +1861,7 @@ void QETDiagramEditor::save()
 			QString filePath = (project_view -> project() -> filePath ());
 			statusBar()-> showMessage(tr("Project %1 registered in the directory: %2.").arg(title).arg (filePath), 2000);
 			m_element_collection_widget->highlightUnusedElement();
+			updateGitStatus();
 		}
 		else {
 			showError(saved);
@@ -1877,6 +1885,7 @@ void QETDiagramEditor::saveAs()
 			QString filePath = (project_view -> project() -> filePath ());
 			statusBar()->showMessage(tr("Project %1 registered in the directory: %2.").arg(title).arg (filePath), 2000);
 			m_element_collection_widget->highlightUnusedElement();
+			updateGitStatus();
 		}
 		else {
 			showError(save_file);
@@ -4232,6 +4241,7 @@ void QETDiagramEditor::subWindowActivated(QMdiSubWindow *subWindows)
 	emit syncElementsPanel();
 	updateUsageTrackersActiveState();
 	updateWindowModifiedState();
+	updateGitStatus();
 }
 
 /**
@@ -5022,6 +5032,54 @@ void QETDiagramEditor::updateShownKinds()
 	const int hidden = ShownKinds::hiddenCount();
 	m_hidden_kinds_label->setText(tr("%n kinds of items hidden", "", hidden));
 	m_hidden_kinds_label->setVisible(hidden > 0);
+}
+
+/**
+	@brief QETDiagramEditor::updateGitStatus
+	Say in the status bar whether the current project is in a git
+	repository and whether it changed since the last commit. Hidden when
+	there is no project, it was never saved, it is not in a repository or
+	git is not installed: nothing to say then.
+
+	Git reads the file on disk, so unsaved edits only show up once the
+	project is saved. A commit made in another program shows up when the
+	project is saved again or another project becomes current.
+*/
+void QETDiagramEditor::updateGitStatus()
+{
+	if (!m_git_status_label) {
+		return;
+	}
+
+	ProjectView *pv = currentProjectView();
+	const QString path = pv ? pv->project()->filePath() : QString();
+	const GitRepository::Status status = GitRepository::status(path);
+
+	const QString branch = status.branch.isEmpty() ? tr("detached", "git: no branch")
+												   : status.branch;
+	QString text;
+	switch (status.state) {
+		case GitRepository::FileState::GitUnavailable:
+		case GitRepository::FileState::NotInRepository:
+			m_git_status_label->setVisible(false);
+			return;
+		case GitRepository::FileState::Untracked:
+			text = tr("Git: %1 · not tracked").arg(branch);
+			break;
+		case GitRepository::FileState::Unmodified:
+			text = tr("Git: %1 · committed").arg(branch);
+			break;
+		case GitRepository::FileState::Modified:
+			text = tr("Git: %1 · changes not committed").arg(branch);
+			break;
+		case GitRepository::FileState::Unknown:
+			text = tr("Git: status unknown");
+			break;
+	}
+	m_git_status_label->setText(text);
+	m_git_status_label->setToolTip(tr("Git repository: %1").arg(
+		QDir::toNativeSeparators(status.repository_root)));
+	m_git_status_label->setVisible(true);
 }
 
 /**

@@ -224,6 +224,12 @@ add_test(NAME tst_alignment COMMAND tst_alignment)
 target_include_directories(tst_alignment PRIVATE ${QET_DIR}/sources)
 target_link_libraries(tst_alignment PRIVATE Qt::Test)
 
+add_executable(tst_gitrepository tst_gitrepository.cpp
+  ${QET_DIR}/sources/git/gitrepository.cpp)
+add_test(NAME tst_gitrepository COMMAND tst_gitrepository)
+target_include_directories(tst_gitrepository PRIVATE ${QET_DIR}/sources)
+target_link_libraries(tst_gitrepository PRIVATE Qt::Test)
+
 # terminalnamecheck.h is header-only: the terminal name rule applied by the
 # element editor on save and by --check-elements.
 add_executable(tst_terminalnamecheck tst_terminalnamecheck.cpp)

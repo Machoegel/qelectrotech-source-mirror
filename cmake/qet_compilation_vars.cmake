@@ -1054,6 +1054,12 @@ list(APPEND QET_SRC_FILES
   ${QET_DIR}/sources/scripting/assistantinfo.h
 )
 
+# Git: version control of project files, through the git command line
+list(APPEND QET_SRC_FILES
+  ${QET_DIR}/sources/git/gitrepository.cpp
+  ${QET_DIR}/sources/git/gitrepository.h
+)
+
 if(QET_SPACEMOUSE_ENABLED)
   list(APPEND QET_SRC_FILES
     ${QET_DIR}/sources/spacemouse/spacemousebackend.h

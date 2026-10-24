@@ -215,6 +215,7 @@ class QETDiagramEditor : public QETMainWindow
 	private slots:
 		void updateTextGridButton();
 		void updateShownKinds();
+		void updateGitStatus();
 		void selectionChanged();
 
 	public:
@@ -326,6 +327,7 @@ class QETDiagramEditor : public QETMainWindow
 		QToolButton *m_text_grid_button = nullptr;
 		QMenu *m_shown_kinds_menu = nullptr;		///< View > Show, kinds of items (#301)
 		QLabel *m_hidden_kinds_label = nullptr;	///< Status bar: how many kinds are hidden
+		QLabel *m_git_status_label = nullptr;	///< Status bar: git state of the current project
 
 		QList <QAction *> m_zoom_action_toolBar; ///Only zoom action must displayed in the toolbar
 
